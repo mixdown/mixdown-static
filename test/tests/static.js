@@ -1,27 +1,28 @@
+var App = require('mixdown-app').App;
+var YourPlugin = require('../../index.js');
+var assert = require('assert');
+var path = require('path');
 var fs = require('fs');
 var path = require('path');
-var assert = require('assert');
-var broadway = require('broadway');
-var StaticPlugin = require('../../index.js');
 var MockResponse = require('hammock').Response;
 
 suite('Static Plugin', function() {
 
-  var app = {
-    plugins: new broadway.App()
-  };
-  var randomNamespace = (Math.floor(Math.random() * 1000)).toString();
+  var app = new App();
 
   setup(function(done) {
 
-    app.plugins.use(new StaticPlugin(randomNamespace), {
+    var p = new YourPlugin({
       etag: true,
       headers: {
         cats: 'meow'
       }
     });
 
-    done();
+    //attach it
+    app.use(p, 'staticModule');
+    app.setup(done);
+
   });
 
   test('send file', function(done) {
@@ -41,12 +42,14 @@ suite('Static Plugin', function() {
       done();
     });
 
-    app.plugins[randomNamespace].file({
+    app.staticModule.file({
       path: filepath,
       res: res,
       headers: {
-        dogs: 'bark'
-      }
+        dogs: 'bark',
+        cats: 'meow'
+      },
+      etag: true
     }, function(err) {
       assert.ifError(err, 'Should not error');
     });
